@@ -2,70 +2,253 @@
 
 Gateway-Dienst fuer eine RESOL/PAW Frischwasserstation am VBus.
 
-Ziel:
-- VBus ueber USB/Serial lesen und schreiben.
-- Live- und Parameterwerte per HTTP/WebSocket bereitstellen.
-- EDOMI-LBS kann Ausgaenge nur bei Aenderungen aktualisieren.
-- Nach jedem Schreibbefehl wird der Wert von der FriWa neu gelesen und als Readback gesendet.
-- Installation aus einem Git-Clone inkl. systemd-Service.
+Der Gateway laeuft auf dem Rechner, an dem das USB/VBus-Interface steckt, z. B. auf einem Raspberry Pi. EDOMI greift danach per HTTP auf diesen Gateway zu. EDOMI selbst spricht nicht direkt mit dem seriellen VBus-Port.
 
-## Status
+## Ziel
 
-Aktuell enthalten:
-- Profil `profiles/friwa-0x7611.json` fuer RESOL/PAW FriWa Adresse `0x7611`.
-- 20 Live-Ausgaenge aus Paket `00_0010_7611_10_0100`.
-- 184 Parameter aus `MenuFriwa_1.0.xml`.
-- 75 laut XML editierbare Parameter mit passender `input`/`output`-Nummer.
-- HTTP API.
-- WebSocket API.
-- Basic Auth, optional Bearer Token.
-- Optional TLS mit eigenem Zertifikat.
-- CLI-Testtool `vbus-test`.
-- systemd Unit und Installationsscript.
+- RESOL/PAW FriWa ueber VBus lesen und schreiben.
+- Live-Werte und Parameterwerte per HTTP/WebSocket bereitstellen.
+- Schreibwerte nach jedem Write direkt aus der FriWa zuruecklesen.
+- EDOMI-Ausgaenge nur bei Wertwechsel setzen.
+- Mehrere EDOMI-Bausteine oder Clients duerfen denselben Gateway nutzen.
+- RESOL-RSC-Dateien nicht mitliefern, sondern lokal vom Nutzer aus dem offiziellen RESOL-Download extrahieren lassen.
+
+## Was im Git-Repo enthalten ist
+
+Enthalten:
+
+- Gateway-Quellcode `src/`
+- CLI-Testtool `vbus-test`
+- HTTP/WebSocket API
+- Basic Auth, optional Bearer Token
+- optional TLS/HTTPS
+- systemd Unit
+- Installationsscript
+- Profilgenerator
+- EDOMI-LBS-Generator fuer Full und Light
+- Extract-Script fuer RESOL RSC
+- Dokumentation und MIT-Lizenz fuer den Projektcode
+
+Nicht enthalten:
+
+- RESOL-RSC ZIP/EXE
+- RESOL XML-Dateien
+- generiertes Profil `profiles/friwa-0x7611.json`
+- generierte IO-Maps
+- generierte EDOMI-LBS-Dateien
+- lokale Config mit echten Zugangsdaten
+- `node_modules/`
+- `dist/`
+
+Grund: Das Profil und die EDOMI-Mappings enthalten abgeleitete Daten aus RESOL-RSC-XMLs. Da deren Weitergabebedingungen hier nicht geklaert sind, soll jeder Nutzer RSC selbst von RESOL laden und daraus lokal das Profil erzeugen.
+
+## Architektur
+
+```text
+FriWa / RESOL Regler
+        |
+        | VBus
+        |
+USB/VBus-Interface
+        |
+        | /dev/ttyACM0
+        |
+Raspberry Pi / Gateway-Node
+        |
+        | vbus-friwa-gateway systemd service
+        | HTTP :8787
+        |
+EDOMI
+        |
+        | LBS 19100833 Light oder 19100832 Full
+        |
+EDOMI Logik / KNX / Visualisierung
+```
+
+Wichtig:
+
+- Nur der Gateway oeffnet den seriellen Port.
+- Mehrere EDOMI-Bausteine duerfen gleichzeitig die HTTP API nutzen.
+- VBus-Reads und Writes werden im Gateway intern per Lock nacheinander ausgefuehrt.
+- `vbus-test` nutzt standardmaessig ebenfalls die HTTP API des laufenden Gateway-Service.
+- Nur `vbus-test --direct` greift direkt auf Serial/VBus zu und sollte nicht parallel zum systemd-Service laufen.
 
 ## Voraussetzungen
 
-- Linux, z. B. Raspberry Pi.
-- Node.js >= 20.
-- npm.
-- USB/VBus-Interface, z. B. `/dev/ttyACM0`.
-- Benutzer des Dienstes muss Zugriff auf die serielle Schnittstelle haben, normalerweise Gruppe `dialout`.
+Auf dem Gateway-Node:
 
-## Schnellinstallation
+- Linux, z. B. Raspberry Pi OS
+- Node.js >= 20
+- npm
+- 7z fuer die RESOL-RSC-Extraktion
+- USB/VBus-Interface, typischerweise `/dev/ttyACM0`
+- User des Dienstes braucht Zugriff auf die serielle Schnittstelle, normalerweise Gruppe `dialout`
+
+Debian/Raspberry Pi OS:
 
 ```bash
-git clone <repo-url> vbus-friwa-gateway
-cd vbus-friwa-gateway
-sudo ./scripts/install.sh
-sudo nano /etc/vbus-friwa-gateway/config.json
-sudo systemctl enable --now vbus-friwa-gateway.service
+sudo apt-get update
+sudo apt-get install -y git nodejs npm 7zip
 ```
 
-Das Installationsscript:
-- kopiert das Projekt nach `/opt/vbus-friwa-gateway`,
-- legt User `vbus-friwa` an, falls er fehlt,
-- installiert Node-Abhaengigkeiten,
-- baut `dist/`,
-- legt `/etc/vbus-friwa-gateway/config.json` an, falls nicht vorhanden,
-- installiert `systemd/vbus-friwa-gateway.service`.
+Falls `7zip` auf der Distribution nicht existiert:
 
-Der Service wird absichtlich nicht automatisch gestartet, damit Port, Auth und TLS vorher geprueft werden koennen.
+```bash
+sudo apt-get install -y p7zip-full
+```
 
-## Config
+## Installation Von Git Bis Gateway-Service
 
-Beispiel: `config/example.json`
+### 1. Repo klonen
+
+```bash
+git clone https://github.com/x3muha/vbus-friwa-gateway.git
+cd vbus-friwa-gateway
+```
+
+### 2. RESOL RSC selbst herunterladen
+
+RESOL-Produktseite:
+
+```text
+https://www.resol.de/de/produktdetail/170
+```
+
+Auf der Seite:
+
+1. Tab `Software` oeffnen.
+2. `RSC Version 2.5 b35` herunterladen.
+3. Datei lokal speichern, z. B. als:
+
+```text
+/tmp/RSC.zip
+```
+
+Beim Erstellen dieser Doku war der direkte Link:
+
+```text
+https://www.resol.de/software/RSC/RSC.zip
+```
+
+Der direkte Link kann sich bei RESOL aendern. Im Zweifel immer die Produktseite verwenden.
+
+### 3. Benoetigte XML-Dateien extrahieren
+
+```bash
+npm run extract:resol -- --archive /tmp/RSC.zip
+```
+
+Das Script extrahiert nur:
+
+```text
+vendor/resol-rsc/MenuFriwa_1.0.xml
+vendor/resol-rsc/VBusSpecificationResol.xml
+```
+
+Diese Dateien werden nicht committed.
+
+Wenn du statt `RSC.zip` direkt den enthaltenen Installer hast, geht auch:
+
+```bash
+npm run extract:resol -- --archive /tmp/ServiceCenterFullSetup.exe
+```
+
+### 4. Abhaengigkeiten installieren
+
+```bash
+npm install
+```
+
+### 5. FriWa-Profil erzeugen
+
+```bash
+npm run generate:profile
+```
+
+Erzeugt lokal:
+
+```text
+profiles/friwa-0x7611.json
+```
+
+Dieses Profil ist fuer die RESOL/PAW FriWa mit Adresse `0x7611` gebaut.
+
+Aus dem RSC-Mapping werden dabei u. a. erzeugt:
+
+- 20 Live-Werte aus `00_0010_7611_10_0100`
+- Parameter aus `MenuFriwa_1.0.xml`
+- EDOMI-Varianten `edomi.full` und `edomi.light`
+- sinnvolle Light-Namens-Overrides, z. B. `Warmwasser Soll`
+
+### 6. EDOMI-Bausteine erzeugen
+
+```bash
+npm run generate:edomi:full
+npm run generate:edomi:light
+```
+
+In dieser Arbeitsumgebung erzeugen die Scripts:
+
+```text
+/zwischenspeicher/edomi/LBS/19100832/19100832_lbs.php
+/zwischenspeicher/edomi/LBS/19100833/19100833_lbs.php
+```
+
+Wenn dein EDOMI-LBS-Verzeichnis anders liegt, den Generator direkt mit eigenem Zielpfad starten:
+
+```bash
+python3 scripts/generate_edomi_lbs.py --profile profiles/friwa-0x7611.json --variant light --out /pfad/zu/edomi/LBS/19100833/19100833_lbs.php
+```
+
+Empfehlung:
+
+- Fuer normalen Betrieb zuerst `19100833` Light verwenden.
+- `19100832` Full nur verwenden, wenn wirklich alle Parameter sichtbar sein sollen.
+
+Light-Mapping:
+
+- A1..A20: Live-Werte
+- E16/A16: `0x0130 Warmwasser Soll`, Readback ueber live `Warmwassersolltemperatur`
+- E21/A21..E44/A44: praxisnahe Schreibwerte
+- A45: frei
+- A46..A52: Statusausgaenge
+
+### 7. Projekt bauen
+
+```bash
+npm run build
+npm run check
+```
+
+### 8. Gateway installieren
+
+```bash
+sudo ./scripts/install.sh
+```
+
+Das Script:
+
+- kopiert das Projekt nach `/opt/vbus-friwa-gateway`
+- legt User `vbus-friwa` an, falls er fehlt
+- installiert Node-Abhaengigkeiten
+- baut `dist/`
+- legt `/etc/vbus-friwa-gateway/config.json` an, falls nicht vorhanden
+- installiert `vbus-friwa-gateway.service`
+- startet den Dienst noch nicht automatisch
+
+### 9. Config pruefen
+
+```bash
+sudo nano /etc/vbus-friwa-gateway/config.json
+```
+
+Wichtig:
 
 ```json
 {
   "serial": {
     "path": "/dev/ttyACM0",
     "baudRate": 9600
-  },
-  "vbus": {
-    "refreshTries": 1,
-    "refreshTimeoutMs": 200,
-    "actionTries": 2,
-    "actionTimeoutMs": 1500
   },
   "server": {
     "host": "0.0.0.0",
@@ -78,11 +261,6 @@ Beispiel: `config/example.json`
     "password": "admin",
     "token": ""
   },
-  "tls": {
-    "enabled": false,
-    "certFile": "",
-    "keyFile": ""
-  },
   "profile": {
     "file": "./profiles/friwa-0x7611.json"
   },
@@ -93,62 +271,158 @@ Beispiel: `config/example.json`
 }
 ```
 
-Wichtige Felder:
-- `serial.path`: USB/Serial-Port.
-- `vbus.refreshTimeoutMs`: kurzer Timeout pro Parameter beim Gesamt-Refresh. Wichtig, damit nicht antwortende XML-Werte den Durchlauf nicht blockieren.
-- `vbus.actionTimeoutMs`: laengerer Timeout fuer Einzel-Reads und Writes.
-- `server.refreshIntervalMs`: kompletter Parameter-Refresh, Standard `60000`.
-- `server.parameterReadMode`: `all`, `writable` oder `none`.
-- `auth.username/password`: Basic Auth. Default ist bewusst `admin:admin`, damit ein frischer Test sofort funktioniert.
-- `auth.token`: optionaler Bearer Token zusaetzlich zu Basic Auth.
-- `tls.enabled`: aktiviert HTTPS/WSS direkt im Gateway.
-- `writes.enabled`: globaler Schreibschalter.
-- `writes.deny`: Liste von Keys oder Hex-Indexes, die trotz XML nicht schreibbar sein sollen.
+Felder:
 
-Sicherheit:
-- Im privaten LAN ist `admin:admin` praktisch fuer den Start.
-- Fuer produktiven Betrieb Passwort aendern.
-- Wenn ueber Netzgrenzen hinweg erreichbar, TLS aktivieren und Token setzen.
-- Unverschluesseltes HTTP/WS ist nur fuer lokale/private Netze gedacht.
+- `serial.path`: VBus-USB-Port
+- `server.port`: HTTP-Port fuer EDOMI, Standard `8787`
+- `server.refreshIntervalMs`: kompletter Refresh, Standard `60000`
+- `server.parameterReadMode`: `all`, `writable` oder `none`
+- `auth.username/password`: Basic Auth, Standard `admin/admin`
+- `auth.token`: optionaler Bearer Token
+- `tls.enabled`: HTTPS/WSS aktivieren
+- `writes.enabled`: globaler Schreibschalter
+- `writes.deny`: einzelne Keys oder Hex-Indizes sperren
 
-## Start ohne systemd
+### 10. Service starten
 
 ```bash
-npm install
-npm run build
-node dist/index.js --config config/example.json
+sudo systemctl enable --now vbus-friwa-gateway.service
+sudo systemctl status vbus-friwa-gateway.service
 ```
 
-## Testtool
-
-Das Tool nutzt dieselbe Config und dieselbe Werteskalierung wie der Service.
-Standard ist der Zugriff auf den laufenden Gateway-Dienst per HTTP API. Dadurch kann `vbus-test` parallel zum systemd-Service benutzt werden, ohne den Serial-Port direkt zu belegen.
-Mit `--direct` greift das Tool wie frueher direkt auf die serielle VBus-Schnittstelle zu.
+Logs:
 
 ```bash
-# alle Parameter lesen
-node dist/cli.js --config config/example.json --read --all
-
-# einen Parameter lesen
-node dist/cli.js --config config/example.json --read 0x0130
-
-# Wert schreiben, automatisch skaliert: 65 °C -> raw 650
-node dist/cli.js --config config/example.json --write 0x0130 65
-
-# Rohwert schreiben
-node dist/cli.js --config config/example.json --write 0x0130 650 --raw
-
-# direkter Serial-Test ohne Gateway-Service
-node dist/cli.js --config config/example.json --direct --read 0x0130
+journalctl -u vbus-friwa-gateway.service -f
 ```
 
-Nach jedem Write liest das Tool den Wert erneut aus der FriWa.
+## Funktion Testen
+
+### Health
+
+```bash
+curl -u admin:admin http://127.0.0.1:8787/health
+```
+
+Erwartung:
+
+```json
+{"ok":true,"ts":"..."}
+```
+
+### Einzelwert lesen
+
+```bash
+vbus-test --config /etc/vbus-friwa-gateway/config.json --read 0x0130
+```
+
+Beispiel:
+
+```text
+0x0130  param.0x0130.warmwassersoll  raw=600  value=60
+```
+
+### Alle lesbaren Werte lesen
+
+```bash
+vbus-test --config /etc/vbus-friwa-gateway/config.json --read --all
+```
+
+### Wert schreiben
+
+Beispiel Warmwasser Soll auf `60 °C`:
+
+```bash
+vbus-test --config /etc/vbus-friwa-gateway/config.json --write 0x0130 60
+```
+
+Der Gateway rechnet automatisch:
+
+```text
+60 °C -> raw 600
+```
+
+Nach dem Write wird `0x0130` direkt erneut gelesen. Der angezeigte Wert ist also der echte Readback.
+
+Direkter Serial-Test ohne Gateway-Service:
+
+```bash
+vbus-test --config /etc/vbus-friwa-gateway/config.json --direct --read 0x0130
+```
+
+Nur nutzen, wenn der systemd-Service gestoppt ist.
+
+## EDOMI Einrichten
+
+### 1. Light-LBS importieren
+
+Empfohlene Datei:
+
+```text
+/zwischenspeicher/edomi/LBS/19100833/19100833_lbs.php
+```
+
+Baustein:
+
+```text
+19100833 VBus FriWa Gateway Light
+```
+
+### 2. EDOMI-Eingaenge konfigurieren
+
+Wichtige Eingange:
+
+| Eingang | Bedeutung | Beispiel |
+|---:|---|---|
+| E1 | Gateway Host/IP | `10.0.1.221` |
+| E2 | Gateway Port | `8787` |
+| E3 | HTTPS 0/1 | `0` |
+| E4 | User | `admin` |
+| E5 | Passwort | `admin` |
+| E6 | Bearer Token | leer |
+| E7 | Aktiv 1/0 | `1` |
+| E8 | Intervall Sekunden | `60` |
+| E9 | Sofort lesen | Trigger |
+| E10 | Debug RAW 1/0 | `0` |
+| E11 | SSL pruefen 1/0 | `0` |
+| E12 | Timeout Sekunden | `8` |
+
+### 3. Wichtige Light-Eingaenge
+
+| Eingang | Ausgang | Index | Name |
+|---:|---:|---|---|
+| E16 | A16 | `0x0130` | Warmwasser Soll |
+| E23 | A23 | `0x0082` | Zirkulation Laufzeit |
+| E32 | A32 | `0x0100` | Notbetrieb aktiv |
+| E33 | A33 | `0x0101` | Notbetrieb Prozent |
+| E43 | A43 | `0x0152` | Maximaler Durchfluss |
+| E44 | A44 | `0x0163` | Zapfung Mindestdurchfluss |
+
+Die vollstaendige Zuordnung steht in der Hilfe des Bausteins und wird lokal als IO-Map erzeugt, wenn die Mappingdaten generiert werden.
+
+### 4. Write-/Readback-Verhalten
+
+Wenn EDOMI z. B. schreibt:
+
+```text
+E16 = 60
+```
+
+dann passiert:
+
+1. LBS sendet `POST /api/write`.
+2. Gateway schreibt `0x0130`.
+3. Gateway liest `0x0130` erneut.
+4. LBS setzt `A16` mit dem echten Readback.
+
+Wenn der Regler einen Wert begrenzt oder ablehnt, zeigt EDOMI den Readback-Wert und nicht blind den Wunschwert.
 
 ## HTTP API
 
 Auth:
-- Basic Auth: `admin:admin` laut Config.
-- Oder `Authorization: Bearer <token>`, wenn `auth.token` gesetzt ist.
+
+- Basic Auth: `admin:admin`
+- oder `Authorization: Bearer <token>`, wenn `auth.token` gesetzt ist
 
 Endpoints:
 
@@ -160,16 +434,6 @@ POST /api/read
 POST /api/write
 WS   /ws
 ```
-
-Mehrere Clients:
-- Mehrere EDOMI-Bausteine, Browser, CLI-Aufrufe oder andere Clients duerfen gleichzeitig auf denselben Gateway zugreifen.
-- Wichtig ist nur: Es darf nur ein Prozess direkt am seriellen VBus-Port haengen.
-- Genau dafuer gibt es den Gateway als zentralen Dienst.
-- Alle normalen Clients sprechen HTTP/WebSocket mit dem Gateway und oeffnen den Serial-Port nicht selbst.
-- Innerhalb des Gateway werden VBus-Reads und Writes per Lock nacheinander ausgefuehrt.
-- Dadurch laufen gleichzeitige API-Anfragen nicht parallel auf dem Bus, sondern werden seriell abgearbeitet.
-- `vbus-test` nutzt standardmaessig ebenfalls die HTTP API des laufenden Dienstes.
-- Nur `vbus-test --direct` greift direkt auf Serial/VBus zu und sollte nicht parallel zum systemd-Service benutzt werden.
 
 Beispiele:
 
@@ -214,242 +478,49 @@ wss://host:8787/ws
 ```
 
 Auth:
-- Basic Auth Header, falls Client das kann.
-- Oder Query-Token: `/ws?token=<token>`.
+
+- Basic Auth Header, falls Client das kann
+- oder Query-Token: `/ws?token=<token>`
 
 Events:
 
-```json
-{
-  "type": "snapshot",
-  "ts": "2026-06-16T10:00:00.000Z",
-  "data": []
-}
-```
-
-```json
-{
-  "type": "change",
-  "ts": "2026-06-16T10:00:01.000Z",
-  "data": {
-    "key": "live.warmwassersolltemperatur",
-    "raw": 60,
-    "value": 60,
-    "text": "60 °C",
-    "source": "live",
-    "output": 16
-  }
-}
-```
-
-```json
-{
-  "type": "writeResult",
-  "ts": "2026-06-16T10:00:02.000Z",
-  "data": {
-    "ok": true,
-    "key": "param.0x0130.warmwassersoll",
-    "index": "0x0130",
-    "requestedRaw": 600,
-    "before": 450,
-    "after": 600
-  }
-}
-```
+- `hello`
+- `snapshot`
+- `change`
+- `writeResult`
+- `error`
 
 Der Service sendet:
-- `snapshot` beim WebSocket-Verbindungsaufbau,
-- `change` nur bei Aenderung,
-- erzwungenes `change`/`writeResult` nach einem Write-Readback.
 
-## EDOMI-Mapping
+- `snapshot` beim WebSocket-Verbindungsaufbau
+- `change` nur bei Aenderung
+- erzwungenes `change`/`writeResult` nach einem Write-Readback
 
-Das Profil enthaelt fuer jedes Feld die Gateway-Nummern `input`/`output` und zusaetzlich EDOMI-Varianten unter `edomi.full` und `edomi.light`.
+## Sicherheit
 
-Regeln:
-- Full-LBS `19100832`: Live-Werte `A1..A20`, Parameter ab `A25`, Status `A209..A215`.
-- Light-LBS `19100833`: Live-Werte `A1..A20`, praxisnahe Schreibwerte `E16/A16` und `E21/A21..E44/A44`, `A45` frei, Status `A46..A52`.
-- Schreibbare Werte haben in der jeweiligen EDOMI-Variante grundsaetzlich Eingang gleich Ausgang.
-- Ausnahme Light: `0x0130 WarmwasserSoll` nutzt bewusst `E16/A16`, weil `A16` der Live-Readback `Warmwassersolltemperatur` ist.
-- Sichtbare E/A-Namen enthalten keine `0x...`-Indexnummern; die Indexzuordnung steht in der LBS-Hilfe und in der IO-Map.
-- Wenn ein Eingang im EDOMI-Baustein beschrieben wird, sendet der LBS einen Write an den zugeordneten Gateway-Key.
-- Danach liest der Gateway-Service den Wert erneut und der LBS setzt den echten Readback-Ausgang.
-- Vollstaendige Listen: `docs/IO_MAP.md` und `docs/IO_MAP_LIGHT.md`.
-
-Der EDOMI-LBS soll keine eigene VBus-Logik enthalten. Er spricht nur HTTP/WebSocket mit dem Gateway.
-
-### EDOMI-Namen und Overrides
-
-Die technischen Rohdaten kommen aus der RESOL-XML:
-
-- XML-Value-ID, z. B. `WarmwasserSoll`
-- Parameterindex, z. B. `0x0130`
-- Datentyp, z. B. `TemperatureShort`
-- Bereich, z. B. `45..65`
-- Einheit und Skalierungsfaktor
-
-Die sichtbaren Namen im EDOMI-Baustein muessen nicht 1:1 aus der XML kommen. Fuer Light werden sprechende Namen im Profil hinterlegt:
-
-```json
-{
-  "key": "param.0x0130.warmwassersoll",
-  "edomi": {
-    "light": {
-      "input": 16,
-      "output": 16,
-      "label": "Warmwasser Soll"
-    }
-  }
-}
-```
-
-Regel:
-- Gateway-Logik nutzt `key` und `indexHex`.
-- EDOMI-Porttexte nutzen `edomi.<variant>.label`, wenn vorhanden.
-- Fehlt ein Override, wird das XML-Label verwendet.
-- Hex-Indizes stehen nicht im Portnamen, sondern in der Baustein-Hilfe und in `docs/IO_MAP_LIGHT.md`.
-
-### EDOMI-Ablauf
-
-Normaler Read:
-
-1. EDOMI triggert E9 oder der Baustein-Timer laeuft ab.
-2. LBS startet seinen EXEC-Teil.
-3. EXEC ruft `GET /api/state` am Gateway auf.
-4. Gateway liefert den letzten bekannten State.
-5. Der LBS mappt Gateway-Keys auf EDOMI-Ausgaenge.
-6. Ausgaenge werden nur gesetzt, wenn sich der Wert geaendert hat.
-
-Write:
-
-1. Ein schreibbarer Eingang wird beschrieben, z. B. `E16 = 60`.
-2. LBS erkennt den Refresh dieses Eingangs.
-3. EXEC sendet:
-
-```json
-{
-  "key": "param.0x0130.warmwassersoll",
-  "value": 60
-}
-```
-
-4. Gateway skaliert `60` mit Faktor `0.1` auf raw `600`.
-5. Gateway liest den alten Wert.
-6. Gateway schreibt raw `600` auf `0x0130`.
-7. Gateway liest `0x0130` erneut.
-8. LBS setzt den passenden Ausgang mit dem echten Readback.
-
-Beispiel Light:
+Default ist absichtlich einfach:
 
 ```text
-E16 Warmwasser Soll = 60
-POST /api/write key=param.0x0130.warmwassersoll value=60
-Gateway schreibt raw 600
-Gateway liest 0x0130 zurueck
-A16 Warmwassersolltemperatur = echter Readback-Wert
+admin/admin
+HTTP
+TLS aus
 ```
 
-Wenn der Regler einen Wert begrenzt oder ablehnt, ist der Readback entscheidend. EDOMI zeigt dann nicht blind den Wunschwert, sondern den Wert, den die FriWa danach wirklich liefert.
+Fuer private lokale Tests ist das praktisch.
 
-## Messung
+Fuer produktiven Betrieb:
 
-Auf der aktuellen FriWa-Node dauerte ein Gateway-Read-All ueber HTTP/API mit kurzen Refresh-Timeouts etwa `33.4 s`.
-Dabei wurden im Test `20` Live-Werte und `128` erfolgreich gelesene Parameterwerte im State gemeldet. Nicht jeder der `184` XML-Parameter antwortet als normaler Value-Index; solche Werte werden beim Refresh uebersprungen.
+- Passwort aendern
+- optional Bearer Token setzen
+- TLS aktivieren, wenn der Gateway nicht nur im vertrauenswuerdigen LAN erreichbar ist
+- keine TLS-Private-Keys committen
+- `writes.deny` fuer Werte nutzen, die in einer Installation nicht schreibbar sein sollen
 
-## Profil neu erzeugen
-
-Das Profil wird nicht aus mitgelieferten RESOL-XMLs erzeugt, sondern aus lokal extrahierten XML-Dateien. Jeder Nutzer soll das RSC-Paket selbst von RESOL beziehen.
-
-RESOL-Seite:
-
-```text
-https://www.resol.de/de/produktdetail/170
-```
-
-Die Seite ist die Produktseite der ServiceCenter-Software RSC. Dort gibt es im Software-Bereich den RSC-Download. Beim Erstellen dieser Doku war der direkte Paketlink:
-
-```text
-https://www.resol.de/software/RSC/RSC.zip
-```
-
-Empfohlener Ablauf:
-
-```bash
-# 1. RSC.zip selbst von RESOL herunterladen, z. B. nach /tmp/RSC.zip
-
-# 2. benoetigte XMLs lokal extrahieren
-npm run extract:resol -- --archive /tmp/RSC.zip
-
-# 3. Profil erzeugen
-npm run generate:profile
-
-# 4. EDOMI-Bausteine erzeugen
-npm run generate:edomi:full
-npm run generate:edomi:light
-```
-
-Das Extraktionsscript schreibt:
-
-```text
-vendor/resol-rsc/MenuFriwa_1.0.xml
-vendor/resol-rsc/VBusSpecificationResol.xml
-```
-
-Diese Dateien sind per `.gitignore` ausgeschlossen.
-
-Direkter Profil-Build:
-
-```bash
-npm run generate:profile
-npm run build
-```
-
-Der Generator liest:
-- `vendor/resol-rsc/MenuFriwa_1.0.xml`
-- `vendor/resol-rsc/VBusSpecificationResol.xml`
-
-und schreibt:
-- `profiles/friwa-0x7611.json`
-
-Aktuell ist das Profil fest fuer die FriWa-Adresse `0x7611` ausgelegt. Die Adresse muss beim Standardbefehl nicht extra angegeben werden.
-
-Ausfuehrliche Anleitung:
-
-```text
-docs/RESOL_RSC_PROFILE.md
-```
-
-EDOMI-LBS neu erzeugen:
-
-```bash
-python3 scripts/generate_edomi_lbs.py --profile profiles/friwa-0x7611.json --variant full --out /zwischenspeicher/edomi/LBS/19100832/19100832_lbs.php
-python3 scripts/generate_edomi_lbs.py --profile profiles/friwa-0x7611.json --variant light --out /zwischenspeicher/edomi/LBS/19100833/19100833_lbs.php
-```
-
-## Bekannte bestaetigte Werte
-
-- `0x0130` `WarmwasserSoll`: raw `600` entspricht `60 °C`.
-- `0x0100` `OptionNotbetrieb`: `0/1`.
-- `0x0101` `Notbetrieb`: `12..100 %`.
-
-## Entwicklung
-
-```bash
-npm install
-npm run generate:profile
-npm run generate:edomi:full
-npm run generate:edomi:light
-npm run build
-node dist/cli.js --help
-```
-
-Keine destruktiven VBus-Writes ohne klare Absicht. Fuer Tests zuerst `--read` nutzen.
-
-## Lizenz und Git-Release
+## Lizenz Und RESOL-Daten
 
 Projektcode:
 
-- MIT License, siehe `LICENSE`.
+- MIT License, siehe `LICENSE`
 
 Abhaengigkeiten:
 
@@ -458,17 +529,31 @@ Abhaengigkeiten:
 - `ws`: MIT
 - `typescript`: Apache-2.0
 
+RESOL-Daten:
+
+- RESOL RSC wird nicht mitgeliefert.
+- Nutzer laden RSC selbst von RESOL.
+- Das lokale Profil wird aus den eigenen RESOL-Dateien erzeugt.
+- Oeffentliche Repos sollten keine RESOL-XMLs, generierten Profile, IO-Maps oder generierten LBS-Dateien enthalten, solange die Weitergaberechte nicht geklaert sind.
+
 Details:
 
 ```text
+docs/RESOL_RSC_PROFILE.md
 docs/LICENSES.md
 docs/GIT_RELEASE_CHECKLIST.md
-docs/RESOL_RSC_PROFILE.md
 ```
 
-Wichtiger Punkt vor einem oeffentlichen Push:
-- `profiles/friwa-0x7611.json`, die EDOMI-LBS-Dateien und die IO-Maps koennen aus RESOL ServiceCenter XMLs abgeleitete Mappingdaten enthalten.
-- Die XMLs bzw. daraus abgeleitete Mappingdaten koennen RESOL/PAW-Rechten unterliegen.
-- Fuer ein privates Repo ist das technisch unkritisch.
-- Fuer ein oeffentliches Repo sollte geklaert werden, ob generierte Mappingdaten mitverteilt werden duerfen.
-- Sichere oeffentliche Variante: Generator, Extractor und Doku committen; Profil, IO-Maps und EDOMI-LBS lokal aus eigenen RESOL-Dateien erzeugen lassen.
+## Entwicklerbefehle
+
+```bash
+npm install
+npm run extract:resol -- --archive /tmp/RSC.zip
+npm run generate:profile
+npm run generate:edomi:full
+npm run generate:edomi:light
+npm run build
+npm run check
+```
+
+Keine destruktiven VBus-Writes ohne klare Absicht. Fuer Tests zuerst `--read` nutzen.
