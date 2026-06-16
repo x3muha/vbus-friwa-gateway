@@ -18,6 +18,7 @@ export const defaultConfig: GatewayConfig = {
     port: 8787,
     refreshIntervalMs: 60000,
     parameterReadMode: 'light',
+    restartAfterRefreshFailures: 3,
   },
   auth: {
     username: 'admin',

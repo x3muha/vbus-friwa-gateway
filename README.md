@@ -262,7 +262,8 @@ Wichtig:
     "host": "0.0.0.0",
     "port": 8787,
     "refreshIntervalMs": 60000,
-    "parameterReadMode": "light"
+    "parameterReadMode": "light",
+    "restartAfterRefreshFailures": 3
   },
   "auth": {
     "username": "admin",
@@ -285,6 +286,7 @@ Felder:
 - `server.port`: HTTP-Port für EDOMI, Standard `8787`
 - `server.refreshIntervalMs`: kompletter Refresh, Standard `60000`
 - `server.parameterReadMode`: `light`, `all`, `writable` oder `none`
+- `server.restartAfterRefreshFailures`: nach so vielen Refresh-Fehlern in Folge beendet sich der Prozess mit Fehlercode, damit systemd den USB/Serial-Port neu öffnet; `0` deaktiviert das
 - `auth.username/password`: Basic Auth, Standard `admin/admin`
 - `auth.token`: optionaler Bearer Token
 - `tls.enabled`: HTTPS/WSS aktivieren
@@ -297,6 +299,13 @@ Read-Modi:
 - `all`: liest alle Parameter aus dem Profil. Das ist für den Full-Baustein vollständig, dauert auf der getesteten FriWa aber rund 36-37 Sekunden pro Durchlauf.
 - `writable`: liest alle laut XML schreibbaren Parameter, unabhängig davon, ob sie im Light-LBS sichtbar sind.
 - `none`: liest keine Parameter zyklisch. Live-Werte aus dem VBus-Paket kommen trotzdem an, solange die FriWa sie sendet.
+
+USB-/Serial-Härtung:
+
+- systemd startet den Dienst bei Fehlern automatisch neu.
+- Wenn z. B. der USB-Stecker kurz gezogen wird und der Prozess danach keine VBus-Free-Bus-Angebote mehr bekommt, zählt der Gateway die Refresh-Fehler.
+- Nach `server.restartAfterRefreshFailures` Fehlern in Folge beendet sich der Gateway absichtlich mit Fehlercode.
+- systemd startet ihn danach neu, wodurch der Serial-Port frisch geöffnet wird.
 
 ### 10. Service starten
 

@@ -2,6 +2,7 @@
 Description=VBus FriWa Gateway
 After=network-online.target
 Wants=network-online.target
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -10,7 +11,7 @@ Group=dialout
 WorkingDirectory=/opt/vbus-friwa-gateway
 ExecStart=/usr/bin/node /opt/vbus-friwa-gateway/dist/index.js --config /etc/vbus-friwa-gateway/config.json
 Restart=on-failure
-RestartSec=5
+RestartSec=10
 NoNewPrivileges=true
 
 [Install]

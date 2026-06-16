@@ -16,6 +16,7 @@ export interface GatewayConfig {
     port: number;
     refreshIntervalMs: number;
     parameterReadMode: ParameterReadMode;
+    restartAfterRefreshFailures: number;
   };
   auth: {
     username: string;

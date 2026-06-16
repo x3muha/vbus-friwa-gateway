@@ -24,13 +24,22 @@ export async function runGateway(config: GatewayConfig, baseDir: string): Promis
   console.log(`vbus-friwa-gateway listening on ${config.tls.enabled ? 'https/wss' : 'http/ws'}://${config.server.host}:${config.server.port}`);
 
   let refreshRunning = false;
+  let refreshFailures = 0;
+  const restartAfterRefreshFailures = config.server.restartAfterRefreshFailures ?? 3;
   const refresh = async () => {
     if (refreshRunning) return;
     refreshRunning = true;
     try {
       await vbus.refreshParameters();
+      refreshFailures = 0;
     } catch (err) {
-      console.error(`[refresh] ${err instanceof Error ? err.message : String(err)}`);
+      refreshFailures += 1;
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[refresh] ${message} (${refreshFailures}/${restartAfterRefreshFailures || 'disabled'})`);
+      if (restartAfterRefreshFailures > 0 && refreshFailures >= restartAfterRefreshFailures) {
+        console.error('[refresh] too many consecutive failures, exiting for systemd restart');
+        process.exit(1);
+      }
     } finally {
       refreshRunning = false;
     }
