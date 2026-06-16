@@ -82,6 +82,6 @@ Current local development state:
 
 ## EDOMI LBS Files
 
-Generated EDOMI LBS files in `/zwischenspeicher/edomi/LBS/19100832` and `/zwischenspeicher/edomi/LBS/19100833` are generated from this project's profile and generator.
+Generated EDOMI LBS files under `generated/edomi/LBS/` are generated from this project's profile and generator.
 
 They are intended to follow the same project license as the gateway code, unless a future repository chooses a different explicit license.

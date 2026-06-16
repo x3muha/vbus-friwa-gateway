@@ -80,9 +80,11 @@ npm run generate:edomi:light
 The generated local EDOMI files are:
 
 ```text
-/zwischenspeicher/edomi/LBS/19100832/19100832_lbs.php
-/zwischenspeicher/edomi/LBS/19100833/19100833_lbs.php
+generated/edomi/LBS/19100832/19100832_lbs.php
+generated/edomi/LBS/19100833/19100833_lbs.php
 ```
+
+Use `scripts/generate_edomi_lbs.py --out <path>` directly if your EDOMI LBS directory is somewhere else.
 
 ## Why This Is Done Locally
 

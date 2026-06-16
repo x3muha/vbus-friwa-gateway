@@ -193,14 +193,16 @@ npm run generate:edomi:full
 npm run generate:edomi:light
 ```
 
-In dieser Arbeitsumgebung erzeugen die Scripts:
+Die Standard-Scripts erzeugen die LBS-Dateien lokal unter:
 
 ```text
-/zwischenspeicher/edomi/LBS/19100832/19100832_lbs.php
-/zwischenspeicher/edomi/LBS/19100833/19100833_lbs.php
+generated/edomi/LBS/19100832/19100832_lbs.php
+generated/edomi/LBS/19100833/19100833_lbs.php
 ```
 
-Wenn dein EDOMI-LBS-Verzeichnis anders liegt, den Generator direkt mit eigenem Zielpfad starten:
+`generated/` ist per `.gitignore` ausgeschlossen.
+
+Wenn dein EDOMI-LBS-Verzeichnis anders liegt, den Generator direkt mit eigenem Zielpfad starten. Beispiel:
 
 ```bash
 python3 scripts/generate_edomi_lbs.py --profile profiles/friwa-0x7611.json --variant light --out /pfad/zu/edomi/LBS/19100833/19100833_lbs.php
@@ -365,7 +367,7 @@ Nur nutzen, wenn der systemd-Service gestoppt ist.
 Empfohlene Datei:
 
 ```text
-/zwischenspeicher/edomi/LBS/19100833/19100833_lbs.php
+generated/edomi/LBS/19100833/19100833_lbs.php
 ```
 
 Baustein:

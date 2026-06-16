@@ -23,6 +23,7 @@ Do not commit:
 
 - `node_modules/`
 - `dist/`, unless the target repo intentionally ships built JavaScript.
+- `generated/`
 - `vendor/resol-rsc/*.xml`
 - downloaded RESOL ZIP/EXE files
 - local `/etc/vbus-friwa-gateway/config.json`
@@ -47,8 +48,8 @@ npm run generate:edomi:full
 npm run generate:edomi:light
 npm run build
 npm run check
-php -d display_errors=1 -l -n /zwischenspeicher/edomi/LBS/19100832/19100832_lbs.php
-php -d display_errors=1 -l -n /zwischenspeicher/edomi/LBS/19100833/19100833_lbs.php
+php -d display_errors=1 -l -n generated/edomi/LBS/19100832/19100832_lbs.php
+php -d display_errors=1 -l -n generated/edomi/LBS/19100833/19100833_lbs.php
 ```
 
 Optional hardware/API tests on a FriWa node:
@@ -71,13 +72,13 @@ vbus-test --config /etc/vbus-friwa-gateway/config.json --read --all
 Full block:
 
 ```text
-/zwischenspeicher/edomi/LBS/19100832/19100832_lbs.php
+generated/edomi/LBS/19100832/19100832_lbs.php
 ```
 
 Light block:
 
 ```text
-/zwischenspeicher/edomi/LBS/19100833/19100833_lbs.php
+generated/edomi/LBS/19100833/19100833_lbs.php
 ```
 
 The Light block is the recommended first import for normal use.

@@ -4,6 +4,7 @@ dist/
 config/local.json
 coverage/
 .env
+generated/
 *.pyc
 __pycache__/
 scripts/__pycache__/
