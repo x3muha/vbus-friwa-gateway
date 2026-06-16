@@ -1,16 +1,16 @@
 # VBus FriWa Gateway
 
-Gateway-Dienst fuer eine RESOL/PAW Frischwasserstation am VBus.
+Gateway-Dienst für eine RESOL/PAW Frischwasserstation am VBus.
 
-Der Gateway laeuft auf dem Rechner, an dem das USB/VBus-Interface steckt, z. B. auf einem Raspberry Pi. EDOMI greift danach per HTTP auf diesen Gateway zu. EDOMI selbst spricht nicht direkt mit dem seriellen VBus-Port.
+Der Gateway läuft auf dem Rechner, an dem das USB/VBus-Interface steckt, z. B. auf einem Raspberry Pi. EDOMI greift danach per HTTP auf diesen Gateway zu. EDOMI selbst spricht nicht direkt mit dem seriellen VBus-Port.
 
 ## Ziel
 
-- RESOL/PAW FriWa ueber VBus lesen und schreiben.
+- RESOL/PAW FriWa über VBus lesen und schreiben.
 - Live-Werte und Parameterwerte per HTTP/WebSocket bereitstellen.
-- Schreibwerte nach jedem Write direkt aus der FriWa zuruecklesen.
-- EDOMI-Ausgaenge nur bei Wertwechsel setzen.
-- Mehrere EDOMI-Bausteine oder Clients duerfen denselben Gateway nutzen.
+- Schreibwerte nach jedem Write direkt aus der FriWa zurücklesen.
+- EDOMI-Ausgänge nur bei Wertwechsel setzen.
+- Mehrere EDOMI-Bausteine oder Clients dürfen denselben Gateway nutzen.
 - RESOL-RSC-Dateien nicht mitliefern, sondern lokal vom Nutzer aus dem offiziellen RESOL-Download extrahieren lassen.
 
 ## Was im Git-Repo enthalten ist
@@ -25,9 +25,9 @@ Enthalten:
 - systemd Unit
 - Installationsscript
 - Profilgenerator
-- EDOMI-LBS-Generator fuer Full und Light
-- Extract-Script fuer RESOL RSC
-- Dokumentation und MIT-Lizenz fuer den Projektcode
+- EDOMI-LBS-Generator für Full und Light
+- Extract-Script für RESOL RSC
+- Dokumentation und MIT-Lizenz für den Projektcode
 
 Nicht enthalten:
 
@@ -40,7 +40,7 @@ Nicht enthalten:
 - `node_modules/`
 - `dist/`
 
-Grund: Das Profil und die EDOMI-Mappings enthalten abgeleitete Daten aus RESOL-RSC-XMLs. Da deren Weitergabebedingungen hier nicht geklaert sind, soll jeder Nutzer RSC selbst von RESOL laden und daraus lokal das Profil erzeugen.
+Grund: Das Profil und die EDOMI-Mappings enthalten abgeleitete Daten aus RESOL-RSC-XMLs. Da deren Weitergabebedingungen hier nicht geklärt sind, soll jeder Nutzer RSC selbst von RESOL laden und daraus lokal das Profil erzeugen.
 
 ## Architektur
 
@@ -67,10 +67,10 @@ EDOMI Logik / KNX / Visualisierung
 
 Wichtig:
 
-- Nur der Gateway oeffnet den seriellen Port.
-- Mehrere EDOMI-Bausteine duerfen gleichzeitig die HTTP API nutzen.
-- VBus-Reads und Writes werden im Gateway intern per Lock nacheinander ausgefuehrt.
-- `vbus-test` nutzt standardmaessig ebenfalls die HTTP API des laufenden Gateway-Service.
+- Nur der Gateway öffnet den seriellen Port.
+- Mehrere EDOMI-Bausteine dürfen gleichzeitig die HTTP API nutzen.
+- VBus-Reads und Writes werden im Gateway intern per Lock nacheinander ausgeführt.
+- `vbus-test` nutzt standardmäßig ebenfalls die HTTP API des laufenden Gateway-Service.
 - Nur `vbus-test --direct` greift direkt auf Serial/VBus zu und sollte nicht parallel zum systemd-Service laufen.
 
 ## Voraussetzungen
@@ -80,7 +80,7 @@ Auf dem Gateway-Node:
 - Linux, z. B. Raspberry Pi OS
 - Node.js >= 20
 - npm
-- 7z fuer die RESOL-RSC-Extraktion
+- 7z für die RESOL-RSC-Extraktion
 - USB/VBus-Interface, typischerweise `/dev/ttyACM0`
 - User des Dienstes braucht Zugriff auf die serielle Schnittstelle, normalerweise Gruppe `dialout`
 
@@ -116,7 +116,7 @@ https://www.resol.de/de/produktdetail/170
 
 Auf der Seite:
 
-1. Tab `Software` oeffnen.
+1. Tab `Software` öffnen.
 2. `RSC Version 2.5 b35` herunterladen.
 3. Datei lokal speichern, z. B. als:
 
@@ -136,9 +136,9 @@ Solange dieser direkte Link funktioniert, kann der Download auch per `wget` erfo
 wget -O /tmp/RSC.zip https://www.resol.de/software/RSC/RSC.zip
 ```
 
-Der direkte Link kann sich bei RESOL aendern. Im Zweifel immer die Produktseite verwenden.
+Der direkte Link kann sich bei RESOL ändern. Im Zweifel immer die Produktseite verwenden.
 
-### 3. Benoetigte XML-Dateien extrahieren
+### 3. Benötigte XML-Dateien extrahieren
 
 ```bash
 npm run extract:resol -- --archive /tmp/RSC.zip
@@ -159,7 +159,7 @@ Wenn du statt `RSC.zip` direkt den enthaltenen Installer hast, geht auch:
 npm run extract:resol -- --archive /tmp/ServiceCenterFullSetup.exe
 ```
 
-### 4. Abhaengigkeiten installieren
+### 4. Abhängigkeiten installieren
 
 ```bash
 npm install
@@ -177,7 +177,7 @@ Erzeugt lokal:
 profiles/friwa-0x7611.json
 ```
 
-Dieses Profil ist fuer die RESOL/PAW FriWa mit Adresse `0x7611` gebaut.
+Dieses Profil ist für die RESOL/PAW FriWa mit Adresse `0x7611` gebaut.
 
 Aus dem RSC-Mapping werden dabei u. a. erzeugt:
 
@@ -210,16 +210,16 @@ python3 scripts/generate_edomi_lbs.py --profile profiles/friwa-0x7611.json --var
 
 Empfehlung:
 
-- Fuer normalen Betrieb zuerst `19100833` Light verwenden.
+- Für normalen Betrieb zuerst `19100833` Light verwenden.
 - `19100832` Full nur verwenden, wenn wirklich alle Parameter sichtbar sein sollen.
 
 Light-Mapping:
 
 - A1..A20: Live-Werte
-- E16/A16: `0x0130 Warmwasser Soll`, Readback ueber live `Warmwassersolltemperatur`
+- E16/A16: `0x0130 Warmwasser Soll`, Readback über live `Warmwassersolltemperatur`
 - E21/A21..E44/A44: praxisnahe Schreibwerte
 - A45: frei
-- A46..A52: Statusausgaenge
+- A46..A52: Statusausgänge
 
 ### 7. Projekt bauen
 
@@ -238,13 +238,13 @@ Das Script:
 
 - kopiert das Projekt nach `/opt/vbus-friwa-gateway`
 - legt User `vbus-friwa` an, falls er fehlt
-- installiert Node-Abhaengigkeiten
+- installiert Node-Abhängigkeiten
 - baut `dist/`
 - legt `/etc/vbus-friwa-gateway/config.json` an, falls nicht vorhanden
 - installiert `vbus-friwa-gateway.service`
 - startet den Dienst noch nicht automatisch
 
-### 9. Config pruefen
+### 9. Config prüfen
 
 ```bash
 sudo nano /etc/vbus-friwa-gateway/config.json
@@ -282,7 +282,7 @@ Wichtig:
 Felder:
 
 - `serial.path`: VBus-USB-Port
-- `server.port`: HTTP-Port fuer EDOMI, Standard `8787`
+- `server.port`: HTTP-Port für EDOMI, Standard `8787`
 - `server.refreshIntervalMs`: kompletter Refresh, Standard `60000`
 - `server.parameterReadMode`: `all`, `writable` oder `none`
 - `auth.username/password`: Basic Auth, Standard `admin/admin`
@@ -376,9 +376,9 @@ Baustein:
 19100833 VBus FriWa Gateway Light
 ```
 
-### 2. EDOMI-Eingaenge konfigurieren
+### 2. EDOMI-Eingänge konfigurieren
 
-Wichtige Eingange:
+Wichtige Eingänge:
 
 | Eingang | Bedeutung | Beispiel |
 |---:|---|---|
@@ -392,10 +392,10 @@ Wichtige Eingange:
 | E8 | Intervall Sekunden | `60` |
 | E9 | Sofort lesen | Trigger |
 | E10 | Debug RAW 1/0 | `0` |
-| E11 | SSL pruefen 1/0 | `0` |
+| E11 | SSL prüfen 1/0 | `0` |
 | E12 | Timeout Sekunden | `8` |
 
-### 3. Wichtige Light-Eingaenge
+### 3. Wichtige Light-Eingänge
 
 | Eingang | Ausgang | Index | Name |
 |---:|---:|---|---|
@@ -406,7 +406,7 @@ Wichtige Eingange:
 | E43 | A43 | `0x0152` | Maximaler Durchfluss |
 | E44 | A44 | `0x0163` | Zapfung Mindestdurchfluss |
 
-Die vollstaendige Zuordnung steht in der Hilfe des Bausteins und wird lokal als IO-Map erzeugt, wenn die Mappingdaten generiert werden.
+Die vollständige Zuordnung steht in der Hilfe des Bausteins und wird lokal als IO-Map erzeugt, wenn die Mappingdaten generiert werden.
 
 ### 4. Write-/Readback-Verhalten
 
@@ -501,7 +501,7 @@ Events:
 Der Service sendet:
 
 - `snapshot` beim WebSocket-Verbindungsaufbau
-- `change` nur bei Aenderung
+- `change` nur bei Änderung
 - erzwungenes `change`/`writeResult` nach einem Write-Readback
 
 ## Sicherheit
@@ -514,15 +514,15 @@ HTTP
 TLS aus
 ```
 
-Fuer private lokale Tests ist das praktisch.
+Für private lokale Tests ist das praktisch.
 
-Fuer produktiven Betrieb:
+Für produktiven Betrieb:
 
-- Passwort aendern
+- Passwort ändern
 - optional Bearer Token setzen
-- TLS aktivieren, wenn der Gateway nicht nur im vertrauenswuerdigen LAN erreichbar ist
+- TLS aktivieren, wenn der Gateway nicht nur im vertrauenswürdigen LAN erreichbar ist
 - keine TLS-Private-Keys committen
-- `writes.deny` fuer Werte nutzen, die in einer Installation nicht schreibbar sein sollen
+- `writes.deny` für Werte nutzen, die in einer Installation nicht schreibbar sein sollen
 
 ## Lizenz Und RESOL-Daten
 
@@ -530,21 +530,21 @@ Projektcode:
 
 - MIT License, siehe `LICENSE`
 
-Abhaengigkeiten:
+Abhängigkeiten:
 
 - `resol-vbus-core`: MIT, https://codeberg.org/DanielWippermann/resol-vbus-core
 - `serialport`: MIT, https://github.com/serialport/node-serialport
 - `ws`: MIT, https://github.com/websockets/ws
 - `typescript`: Apache-2.0, https://github.com/microsoft/TypeScript
 
-Die Abhaengigkeiten werden nicht als Source-Code in dieses Repo kopiert. Sie werden ueber `package.json` und `package-lock.json` per npm installiert.
+Die Abhängigkeiten werden nicht als Source-Code in dieses Repo kopiert. Sie werden über `package.json` und `package-lock.json` per npm installiert.
 
 RESOL-Daten:
 
 - RESOL RSC wird nicht mitgeliefert.
 - Nutzer laden RSC selbst von RESOL.
 - Das lokale Profil wird aus den eigenen RESOL-Dateien erzeugt.
-- Oeffentliche Repos sollten keine RESOL-XMLs, generierten Profile, IO-Maps oder generierten LBS-Dateien enthalten, solange die Weitergaberechte nicht geklaert sind.
+- Öffentliche Repos sollten keine RESOL-XMLs, generierten Profile, IO-Maps oder generierten LBS-Dateien enthalten, solange die Weitergaberechte nicht geklärt sind.
 
 Details:
 
@@ -566,4 +566,4 @@ npm run build
 npm run check
 ```
 
-Keine destruktiven VBus-Writes ohne klare Absicht. Fuer Tests zuerst `--read` nutzen.
+Keine destruktiven VBus-Writes ohne klare Absicht. Für Tests zuerst `--read` nutzen.

@@ -1,17 +1,17 @@
 # EDOMI Handoff: VBus FriWa Gateway
 
-Diese Datei ist die Spezifikation fuer den EDOMI-LBS-Agenten.
+Diese Datei ist die Spezifikation für den EDOMI-LBS-Agenten.
 
 ## Aufgabe
 
-Baue einen EDOMI-LBS fuer `vbus-friwa-gateway`.
+Baue einen EDOMI-LBS für `vbus-friwa-gateway`.
 
 Der LBS:
 - verbindet sich zum Gateway,
-- aktualisiert Ausgaenge nur bei Aenderung,
-- sendet Eingangs-Aenderungen als Writes an das Gateway,
-- verlaesst sich nach Writes immer auf den Readback-Wert des Gateways,
-- enthaelt keine direkte VBus-/Serial-Logik.
+- aktualisiert Ausgänge nur bei Änderung,
+- sendet Eingangs-Änderungen als Writes an das Gateway,
+- verlässt sich nach Writes immer auf den Readback-Wert des Gateways,
+- enthält keine direkte VBus-/Serial-Logik.
 
 ## Gateway
 
@@ -46,19 +46,19 @@ Vorschlag:
 - `E10` Debug
 
 Danach Werteingänge aus Profil:
-- Fuer Full die Nummern aus `edomi.full` verwenden.
-- Fuer Light die Nummern aus `edomi.light` verwenden.
+- Für Full die Nummern aus `edomi.full` verwenden.
+- Für Light die Nummern aus `edomi.light` verwenden.
 - Schreibbare Werte haben im Normalfall Eingang gleich Ausgang.
 - Light-Ausnahme: `0x0130 WarmwasserSoll` nutzt `E16/A16`, weil `A16` schon der Live-Readback `Warmwassersolltemperatur` ist.
 
-## LBS Ausgaenge
+## LBS Ausgänge
 
 Aus `profiles/friwa-0x7611.json`:
-- Fuer jedes Live-Feld die Variantennummer als `A#` anlegen.
-- Fuer jeden Parameter mit Variantenausgang die Variantennummer als `A#` anlegen.
-- Nur bei Aenderung schreiben.
+- Für jedes Live-Feld die Variantennummer als `A#` anlegen.
+- Für jeden Parameter mit Variantenausgang die Variantennummer als `A#` anlegen.
+- Nur bei Änderung schreiben.
 - Beim Start nach `snapshot` alle empfangenen Werte initial setzen.
-- Nach `writeResult` und nachfolgenden `change`-Events passende Ausgaenge aktualisieren.
+- Nach `writeResult` und nachfolgenden `change`-Events passende Ausgänge aktualisieren.
 
 ## Write-Protokoll
 
@@ -94,22 +94,22 @@ Der Gateway-Service liest nach dem Schreiben den Wert neu und sendet das Ergebni
 
 `snapshot`:
 - beim Connect,
-- enthaelt alle aktuellen Werte.
+- enthält alle aktuellen Werte.
 
 `change`:
 - nur wenn Wert anders ist,
-- nach Writes erzwungen fuer den Readback-Wert.
+- nach Writes erzwungen für den Readback-Wert.
 
 `writeResult`:
-- technische Write-Bestaetigung,
-- fuer Status/Debug-Ausgang nutzen.
+- technische Write-Bestätigung,
+- für Status/Debug-Ausgang nutzen.
 
 ## Wichtige Profilregeln
 
 - Full-LBS `19100832`: Live `A1..A20`, Parameter ab `A25`, Status `A209..A215`.
 - Light-LBS `19100833`: Live `A1..A20`, Schreibwerte `E16/A16` und `E21/A21..E44/A44`, `A45` frei, Status `A46..A52`.
-- Sichtbare E/A-Namen sollen kurz und aussagekraeftig sein; Hex-Indizes gehoeren in Hilfe/Map, nicht in den Portnamen.
-- Der LBS muss Gateway-Keys auf EDOMI-Ausgaenge mappen; nicht blind die Gateway-`output`-Nummer aus `/api/state` verwenden.
+- Sichtbare E/A-Namen sollen kurz und aussagekräftig sein; Hex-Indizes gehören in Hilfe/Map, nicht in den Portnamen.
+- Der LBS muss Gateway-Keys auf EDOMI-Ausgänge mappen; nicht blind die Gateway-`output`-Nummer aus `/api/state` verwenden.
 
 ## Fehlerbehandlung
 
@@ -119,4 +119,4 @@ Der LBS soll anzeigen:
 - letzter Write-Status,
 - Timestamp letzter Gateway-Wert.
 
-Keine parallelen Writes fuer denselben Eingang starten.
+Keine parallelen Writes für denselben Eingang starten.
