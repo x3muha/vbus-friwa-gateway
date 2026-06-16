@@ -14,25 +14,33 @@ LICENSE
 
 The dependency license data below is taken from `package-lock.json`.
 
-| Package | Version | License |
-|---|---:|---|
-| `resol-vbus-core` | 0.6.0 | MIT |
-| `serialport` | 13.0.0 | MIT |
-| `ws` | 8.21.0 | MIT |
+| Package | Version | License | Link |
+|---|---:|---|---|
+| `resol-vbus-core` | 0.6.0 | MIT | https://codeberg.org/DanielWippermann/resol-vbus-core |
+| `serialport` | 13.0.0 | MIT | https://github.com/serialport/node-serialport |
+| `ws` | 8.21.0 | MIT | https://github.com/websockets/ws |
 
 Important transitive dependencies:
 
-| Package | Version | License |
-|---|---:|---|
-| `typescript` | 5.9.3 | Apache-2.0 |
-| `@types/node` | 24.13.2 | MIT |
-| `@types/ws` | 8.18.1 | MIT |
-| `@serialport/*` | 10.x/12.x/13.x | MIT |
-| `debug` | 4.4.0 | MIT |
-| `ms` | 2.1.3 | MIT |
-| `node-addon-api` | 8.3.0 | MIT |
-| `node-gyp-build` | 4.8.4 | MIT |
-| `undici-types` | 7.18.2 | MIT |
+| Package | Version | License | Link |
+|---|---:|---|---|
+| `typescript` | 5.9.3 | Apache-2.0 | https://github.com/microsoft/TypeScript |
+| `@types/node` | 24.13.2 | MIT | https://github.com/DefinitelyTyped/DefinitelyTyped |
+| `@types/ws` | 8.18.1 | MIT | https://github.com/DefinitelyTyped/DefinitelyTyped |
+| `@serialport/*` | 10.x/12.x/13.x | MIT | https://github.com/serialport/node-serialport |
+| `debug` | 4.4.0 | MIT | https://github.com/debug-js/debug |
+| `ms` | 2.1.3 | MIT | https://github.com/vercel/ms |
+| `node-addon-api` | 8.3.0 | MIT | https://github.com/nodejs/node-addon-api |
+| `node-gyp-build` | 4.8.4 | MIT | https://github.com/prebuild/node-gyp-build |
+| `undici-types` | 7.18.2 | MIT | https://github.com/nodejs/undici |
+
+Primary upstream links:
+
+- `typescript`: https://github.com/microsoft/TypeScript
+- `@serialport/*`: https://github.com/serialport/node-serialport
+- `@types/*`: https://github.com/DefinitelyTyped/DefinitelyTyped
+
+Dependencies are not vendored as source code in this repository. They are installed by npm from `package.json` / `package-lock.json`.
 
 Before a public release, verify this list again with the final `package-lock.json`.
 

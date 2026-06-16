@@ -532,10 +532,12 @@ Projektcode:
 
 Abhaengigkeiten:
 
-- `resol-vbus-core`: MIT
-- `serialport`: MIT
-- `ws`: MIT
-- `typescript`: Apache-2.0
+- `resol-vbus-core`: MIT, https://codeberg.org/DanielWippermann/resol-vbus-core
+- `serialport`: MIT, https://github.com/serialport/node-serialport
+- `ws`: MIT, https://github.com/websockets/ws
+- `typescript`: Apache-2.0, https://github.com/microsoft/TypeScript
+
+Die Abhaengigkeiten werden nicht als Source-Code in dieses Repo kopiert. Sie werden ueber `package.json` und `package-lock.json` per npm installiert.
 
 RESOL-Daten:
 
