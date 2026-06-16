@@ -1,0 +1,17 @@
+node_modules/
+dist/
+*.log
+config/local.json
+coverage/
+.env
+*.pyc
+__pycache__/
+scripts/__pycache__/
+profiles/*.json
+docs/IO_MAP*.md
+docs/read-all-*.json
+docs/vbus-test-read-all-*.txt
+vendor/resol-rsc/*.xml
+vendor/resol-rsc/*.zip
+vendor/resol-rsc/*.exe
+vendor/resol-rsc/extracted/

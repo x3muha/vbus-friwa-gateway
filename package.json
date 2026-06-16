@@ -1,0 +1,33 @@
+{
+  "name": "vbus-friwa-gateway",
+  "version": "0.1.0",
+  "description": "RESOL/PAW FriWa VBus gateway with HTTP/WebSocket API for EDOMI.",
+  "type": "module",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "bin": {
+    "vbus-friwa-gateway": "dist/index.js",
+    "vbus-test": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "extract:resol": "bash scripts/extract_resol_rsc_xml.sh",
+    "generate:profile": "python3 scripts/generate_friwa_profile.py --menu-xml vendor/resol-rsc/MenuFriwa_1.0.xml --vbus-xml vendor/resol-rsc/VBusSpecificationResol.xml --out profiles/friwa-0x7611.json",
+    "generate:edomi:full": "python3 scripts/generate_edomi_lbs.py --profile profiles/friwa-0x7611.json --variant full --out /zwischenspeicher/edomi/LBS/19100832/19100832_lbs.php",
+    "generate:edomi:light": "python3 scripts/generate_edomi_lbs.py --profile profiles/friwa-0x7611.json --variant light --out /zwischenspeicher/edomi/LBS/19100833/19100833_lbs.php"
+  },
+  "dependencies": {
+    "resol-vbus-core": "^0.6.0",
+    "serialport": "^13.0.0",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

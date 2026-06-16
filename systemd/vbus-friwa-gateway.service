@@ -1,0 +1,17 @@
+[Unit]
+Description=VBus FriWa Gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=vbus-friwa
+Group=dialout
+WorkingDirectory=/opt/vbus-friwa-gateway
+ExecStart=/usr/bin/node /opt/vbus-friwa-gateway/dist/index.js --config /etc/vbus-friwa-gateway/config.json
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

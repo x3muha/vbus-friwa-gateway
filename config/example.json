@@ -1,0 +1,38 @@
+{
+  "serial": {
+    "path": "/dev/ttyACM0",
+    "baudRate": 9600
+  },
+  "vbus": {
+    "refreshTries": 1,
+    "refreshTimeoutMs": 200,
+    "actionTries": 2,
+    "actionTimeoutMs": 1500
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8787,
+    "refreshIntervalMs": 60000,
+    "parameterReadMode": "all"
+  },
+  "auth": {
+    "username": "admin",
+    "password": "admin",
+    "token": ""
+  },
+  "tls": {
+    "enabled": false,
+    "certFile": "",
+    "keyFile": ""
+  },
+  "profile": {
+    "file": "./profiles/friwa-0x7611.json"
+  },
+  "writes": {
+    "enabled": true,
+    "deny": []
+  },
+  "logging": {
+    "level": "info"
+  }
+}
