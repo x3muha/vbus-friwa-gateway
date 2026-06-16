@@ -130,6 +130,12 @@ Beim Erstellen dieser Doku war der direkte Link:
 https://www.resol.de/software/RSC/RSC.zip
 ```
 
+Solange dieser direkte Link funktioniert, kann der Download auch per `wget` erfolgen:
+
+```bash
+wget -O /tmp/RSC.zip https://www.resol.de/software/RSC/RSC.zip
+```
+
 Der direkte Link kann sich bei RESOL aendern. Im Zweifel immer die Produktseite verwenden.
 
 ### 3. Benoetigte XML-Dateien extrahieren
