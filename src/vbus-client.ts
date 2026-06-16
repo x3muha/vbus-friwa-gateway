@@ -32,7 +32,15 @@ export class VBusClient {
 
   async refreshParameters(mode = this.config.server.parameterReadMode): Promise<void> {
     if (mode === 'none') return;
-    const params = this.profile.parameters.filter((param) => mode === 'all' || param.writable);
+    const params = this.profile.parameters.filter((param) => {
+      if (mode === 'all') return true;
+      if (mode === 'writable') return param.writable;
+      if (mode === 'light') {
+        const mapping = param.edomi?.light;
+        return mapping != null && (mapping.input != null || mapping.output != null);
+      }
+      return false;
+    });
     await this.withLock(async () => {
       const tx = this.connection.liveTransceiver;
       const offer = await tx.waitForFreeBus();

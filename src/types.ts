@@ -1,4 +1,4 @@
-export type ParameterReadMode = 'writable' | 'all' | 'none';
+export type ParameterReadMode = 'writable' | 'light' | 'all' | 'none';
 
 export interface GatewayConfig {
   serial: {
@@ -67,6 +67,18 @@ export interface ParameterDef {
   writable: boolean;
   output?: number;
   input?: number;
+  edomi?: {
+    full?: EdomiMapping;
+    light?: EdomiMapping;
+  };
+}
+
+export interface EdomiMapping {
+  output?: number;
+  input?: number;
+  label?: string;
+  note?: string;
+  reuseOutput?: boolean;
 }
 
 export interface StationProfile {

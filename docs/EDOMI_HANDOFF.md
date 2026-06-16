@@ -30,6 +30,8 @@ https://<friwa-node>:8787
 wss://<friwa-node>:8787/ws
 ```
 
+Für den Light-LBS soll der Gateway mit `server.parameterReadMode: "light"` laufen. Dann liest der zyklische Refresh nur die Parameter, die im Profil unter `edomi.light` belegt sind. Live-Werte werden weiterhin über das normale VBus-Live-Paket aktualisiert. Für den Full-LBS wird `server.parameterReadMode: "all"` verwendet.
+
 ## LBS Eingangs-Config
 
 Vorschlag:

@@ -262,7 +262,7 @@ Wichtig:
     "host": "0.0.0.0",
     "port": 8787,
     "refreshIntervalMs": 60000,
-    "parameterReadMode": "all"
+    "parameterReadMode": "light"
   },
   "auth": {
     "username": "admin",
@@ -284,12 +284,19 @@ Felder:
 - `serial.path`: VBus-USB-Port
 - `server.port`: HTTP-Port für EDOMI, Standard `8787`
 - `server.refreshIntervalMs`: kompletter Refresh, Standard `60000`
-- `server.parameterReadMode`: `all`, `writable` oder `none`
+- `server.parameterReadMode`: `light`, `all`, `writable` oder `none`
 - `auth.username/password`: Basic Auth, Standard `admin/admin`
 - `auth.token`: optionaler Bearer Token
 - `tls.enabled`: HTTPS/WSS aktivieren
 - `writes.enabled`: globaler Schreibschalter
 - `writes.deny`: einzelne Keys oder Hex-Indizes sperren
+
+Read-Modi:
+
+- `light`: liest nur die Parameter, die im Profil unter `edomi.light` für den Light-LBS belegt sind. Das sind aktuell 25 Parameter. Für den empfohlenen Light-Baustein ist das der beste Modus. Auf der getesteten FriWa dauerte ein Light-Refresh rund 2-4 Sekunden.
+- `all`: liest alle Parameter aus dem Profil. Das ist für den Full-Baustein vollständig, dauert auf der getesteten FriWa aber rund 36-37 Sekunden pro Durchlauf.
+- `writable`: liest alle laut XML schreibbaren Parameter, unabhängig davon, ob sie im Light-LBS sichtbar sind.
+- `none`: liest keine Parameter zyklisch. Live-Werte aus dem VBus-Paket kommen trotzdem an, solange die FriWa sie sendet.
 
 ### 10. Service starten
 
@@ -451,6 +458,10 @@ curl -u admin:admin http://127.0.0.1:8787/api/state
 curl -u admin:admin -X POST http://127.0.0.1:8787/api/read \
   -H 'content-type: application/json' \
   -d '{"index":"0x0130"}'
+
+curl -u admin:admin -X POST http://127.0.0.1:8787/api/read \
+  -H 'content-type: application/json' \
+  -d '{"all":true,"mode":"light"}'
 
 curl -u admin:admin -X POST http://127.0.0.1:8787/api/write \
   -H 'content-type: application/json' \

@@ -17,7 +17,7 @@ export const defaultConfig: GatewayConfig = {
     host: '0.0.0.0',
     port: 8787,
     refreshIntervalMs: 60000,
-    parameterReadMode: 'all',
+    parameterReadMode: 'light',
   },
   auth: {
     username: 'admin',
